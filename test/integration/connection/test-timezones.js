@@ -3,10 +3,13 @@ var MockDate = require('../../mock_date');
 var assert = require('assert');
 var common = require('../../common');
 
-assert.ok(new Date().getTimezoneOffset() === 420 || new Date().getTimezoneOffset() === 480);
+function registerMock() {
+  MockDate.register('Pacific');
+  assert.ok(new Date().getTimezoneOffset() === 420 || new Date().getTimezoneOffset() === 480);
+}
 
 var table = 'timezone_test';
-var pre_statements = ['', 'SET TIME_ZONE="+00:00"', 'SET TIME_ZONE="SYSTEM"', MockDate.register.bind(MockDate, 'Pacific')];
+var pre_statements = ['', 'SET TIME_ZONE="+00:00"', 'SET TIME_ZONE="SYSTEM"', registerMock];
 var pre_idx = 0;
 var test_days = ['01-01', '03-07', '03-08', '03-09', '12-31'].map(function (day) {
   // Choosing this because 2015-03-08 02:30 Pacific does not exist (due to DST),
