@@ -1,8 +1,12 @@
+var MockDate = require('../../mock_date');
+
 var assert = require('assert');
 var common = require('../../common');
 
+assert.ok(new Date().getTimezoneOffset() === 420 || new Date().getTimezoneOffset() === 480);
+
 var table = 'timezone_test';
-var pre_statements = ['', 'SET TIME_ZONE="+00:00"', 'SET TIME_ZONE="SYSTEM"'];
+var pre_statements = ['', 'SET TIME_ZONE="+00:00"', 'SET TIME_ZONE="SYSTEM"', MockDate.register.bind(MockDate, 'Pacific')];
 var pre_idx = 0;
 var test_days = ['01-01', '03-07', '03-08', '03-09', '12-31'].map(function (day) {
   // Choosing this because 2015-03-08 02:30 Pacific does not exist (due to DST),
@@ -40,7 +44,11 @@ function testNextDate(connection) {
       connection.end(assert.ifError);
       return;
     } else {
-      connection.query(pre_statements[pre_idx], assert.ifError);
+      if (typeof pre_statements[pre_idx] === 'function') {
+        pre_statements[pre_idx]();
+      } else {
+        connection.query(pre_statements[pre_idx], assert.ifError);
+      }
       day_idx = tz_idx = 0;
     }
   }
@@ -105,7 +113,7 @@ function testNextDate(connection) {
     connection.query(options, function (err, rows) {
       assert.ifError(err);
       if (dt.getTime() !== rows[0].dt.getTime() || expected_date_string !== rows_raw[0].dt) {
-        console.log('Failure while testing date: ' + day + ', Timzone: ' + timezone);
+        console.log('Failure while testing date: ' + day + ', Timezone: ' + timezone);
         console.log('Pre-statement: ' + pre_statements[pre_idx]);
         console.log('Expected raw string: ' + expected_date_string);
         console.log('Received raw string: ' + rows_raw[0].dt);
