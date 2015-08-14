@@ -4,7 +4,7 @@ var assert = require('assert');
 var common = require('../../common');
 
 function registerMock() {
-  MockDate.register('Pacific');
+  MockDate.register('US/Pacific');
   assert.ok(new Date().getTimezoneOffset() === 420 || new Date().getTimezoneOffset() === 480);
 }
 

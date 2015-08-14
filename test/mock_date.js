@@ -1,14 +1,16 @@
 var assert = require('assert');
 var OrigDate = Date;
 
-var timezone = 'Pacific';
+var timezone = 'US/Pacific';
+
+var HOUR = 60 * 60 * 1000;
 
 var tzdata = {
   'UTC': {
     names: [0, 'UTC'],
     transitions: [0, 0, Infinity, 0],
   },
-  'Pacific': {
+  'US/Pacific': {
     names: [-7, 'PDT', -8, 'PST'],
     // Generated this data from mysql_tzinfo_to_sql included with MySQL and the
     // tzinfo file on OSX.
@@ -150,17 +152,173 @@ var tzdata = {
       2109229200, -8,
       2120119200, -7,
       2140678800, -8,
-    ]
+    ],
+  },
+  'US/Eastern': {
+    names: [-4, 'EDT', -5, 'EST'],
+    transitions: [
+      0, -5,
+      9961200, -4,
+      25682400, -5,
+      41410800, -4,
+      57736800, -5,
+      73465200, -4,
+      89186400, -5,
+      104914800, -4,
+      120636000, -5,
+      126687600, -4,
+      152085600, -5,
+      162370800, -4,
+      183535200, -5,
+      199263600, -4,
+      215589600, -5,
+      230713200, -4,
+      247039200, -5,
+      262767600, -4,
+      278488800, -5,
+      294217200, -4,
+      309938400, -5,
+      325666800, -4,
+      341388000, -5,
+      357116400, -4,
+      372837600, -5,
+      388566000, -4,
+      404892000, -5,
+      420015600, -4,
+      436341600, -5,
+      452070000, -4,
+      467791200, -5,
+      483519600, -4,
+      499240800, -5,
+      514969200, -4,
+      530690400, -5,
+      544604400, -4,
+      562140000, -5,
+      576054000, -4,
+      594194400, -5,
+      607503600, -4,
+      625644000, -5,
+      638953200, -4,
+      657093600, -5,
+      671007600, -4,
+      688543200, -5,
+      702457200, -4,
+      719992800, -5,
+      733906800, -4,
+      752047200, -5,
+      765356400, -4,
+      783496800, -5,
+      796806000, -4,
+      814946400, -5,
+      828860400, -4,
+      846396000, -5,
+      860310000, -4,
+      877845600, -5,
+      891759600, -4,
+      909295200, -5,
+      923209200, -4,
+      941349600, -5,
+      954658800, -4,
+      972799200, -5,
+      986108400, -4,
+      1004248800, -5,
+      1018162800, -4,
+      1035698400, -5,
+      1049612400, -4,
+      1067148000, -5,
+      1081062000, -4,
+      1099202400, -5,
+      1112511600, -4,
+      1130652000, -5,
+      1143961200, -4,
+      1162101600, -5,
+      1173596400, -4,
+      1194156000, -5,
+      1205046000, -4,
+      1225605600, -5,
+      1236495600, -4,
+      1257055200, -5,
+      1268550000, -4,
+      1289109600, -5,
+      1299999600, -4,
+      1320559200, -5,
+      1331449200, -4,
+      1352008800, -5,
+      1362898800, -4,
+      1383458400, -5,
+      1394348400, -4,
+      1414908000, -5,
+      1425798000, -4,
+      1446357600, -5,
+      1457852400, -4,
+      1478412000, -5,
+      1489302000, -4,
+      1509861600, -5,
+      1520751600, -4,
+      1541311200, -5,
+      1552201200, -4,
+      1572760800, -5,
+      1583650800, -4,
+      1604210400, -5,
+      1615705200, -4,
+      1636264800, -5,
+      1647154800, -4,
+      1667714400, -5,
+      1678604400, -4,
+      1699164000, -5,
+      1710054000, -4,
+      1730613600, -5,
+      1741503600, -4,
+      1762063200, -5,
+      1772953200, -4,
+      1793512800, -5,
+      1805007600, -4,
+      1825567200, -5,
+      1836457200, -4,
+      1857016800, -5,
+      1867906800, -4,
+      1888466400, -5,
+      1899356400, -4,
+      1919916000, -5,
+      1930806000, -4,
+      1951365600, -5,
+      1962860400, -4,
+      1983420000, -5,
+      1994310000, -4,
+      2014869600, -5,
+      2025759600, -4,
+      2046319200, -5,
+      2057209200, -4,
+      2077768800, -5,
+      2088658800, -4,
+      2109218400, -5,
+      2120108400, -4,
+      2140668000, -5,
+    ],
   }
 };
+
+var date_iso_8601_regex=/^\d\d\d\d(?:-\d\d(?:-\d\d(?:T\d\d\:\d\d\:\d\d(?:\.\d\d\d)?Z?)?)?)?$/;
+var local_date_regex=/\d\d\d\d-\d\d-\d\d \d\d\:\d\d\:\d\d/;
 
 function MockDate(param) {
   assert.ok(arguments.length <= 1);
   if (arguments.length) {
     if (param instanceof MockDate) {
       this.d = new OrigDate(param.d);
-    } else {
+    } else if (typeof param === 'string') {
+      if (param.match(date_iso_8601_regex)) {
+        this.d = new OrigDate(param);
+      } else if (param.match(local_date_regex)) {
+        this.d = new OrigDate();
+        this.fromLocal(new OrigDate(param.replace(' ', 'T')));
+      } else {
+        assert.ok(false, 'Unhandled date format passed to MockDate constructor: ' + param);
+      }
+    } else if (typeof param === 'number') {
       this.d = new OrigDate(param);
+    } else {
+      assert.ok(false, 'Unhandled type passed to MockDate constructor: ' + typeof param);
     }
   } else {
     this.d = new OrigDate();
@@ -187,17 +345,22 @@ function passthrough(fn) {
     return this.d[fn].apply(this.d, arguments);
   };
 }
-function localGetter(fn) {
+function localgetter(fn) {
   MockDate.prototype[fn] = function () {
-    var d = new OrigDate(this.d.getTime() - this.calcTZO() * 60 * 60 * 1000);
+    var d = new OrigDate(this.d.getTime() - this.calcTZO() * HOUR);
     return d['getUTC' + fn.slice(3)]();
   };
 }
+MockDate.prototype.fromLocal = function(d) {
+  // From a Date object in the fake-timezone where the returned UTC values are
+  //   meant to be interpreted as local values.
+  this.d.setTime(d.getTime() + this.calcTZO(d.getTime() + this.calcTZO(d.getTime()) * HOUR) * HOUR);
+};
 function localsetter(fn) {
   MockDate.prototype[fn] = function () {
-    var d = new OrigDate(this.d.getTime() - this.calcTZO() * 60 * 60 * 1000);
+    var d = new OrigDate(this.d.getTime() - this.calcTZO() * HOUR);
     d['setUTC' + fn.slice(3)].apply(d, arguments);
-    this.d.setTime(d.getTime() + this.calcTZO() * 60 * 60 * 1000);
+    this.fromLocal(d);
   };
 }
 [
@@ -231,7 +394,7 @@ function localsetter(fn) {
   'getMinutes',
   'getMonth',
   'getSeconds',
-].forEach(localGetter);
+].forEach(localgetter);
 [
   'setDate',
   'setFullYear',
@@ -247,6 +410,10 @@ MockDate.prototype.getTimezoneOffset = function () {
 };
 
 MockDate.prototype.toString = MockDate.prototype.toLocaleString = function () {
+  if (this instanceof OrigDate) {
+    // someone, like util.inspect, calling Date.prototype.toString.call(foo)
+    return OrigDate.prototype.toString.call(this);
+  }
   return 'Mockday ' + this.d.toISOString() + ' GMT-0' + this.calcTZO() + '00 (MockDate)';
 };
 
