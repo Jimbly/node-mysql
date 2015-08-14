@@ -328,6 +328,7 @@ function MockDate(param) {
 
 module.exports = exports = MockDate;
 exports.OrigDate = OrigDate;
+exports.tzdata = tzdata;
 
 MockDate.prototype.calcTZO = function (ts) {
   var data = tzdata[timezone];
@@ -406,6 +407,17 @@ function localsetter(fn) {
   'setSeconds',
 ].forEach(localsetter);
 
+MockDate.prototype.getYear = function () {
+  return this.getFullYear() - 1900;
+};
+
+MockDate.prototype.setYear = function (yr) {
+  if (yr < 1900) {
+    return this.setFullYear(1900 + yr);
+  }
+  return this.setFullYear(yr);
+};
+
 MockDate.prototype.getTimezoneOffset = function () {
   return this.calcTZO() * 60;
 };
@@ -419,10 +431,6 @@ MockDate.prototype.toString = MockDate.prototype.toLocaleString = function () {
 };
 
 MockDate.now = Date.now;
-
-// Unsupported:
-// 'getYear',
-// 'setYear',
 
 // TODO:
 // 'toDateString',
