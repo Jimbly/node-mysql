@@ -30,6 +30,7 @@ common.getTestConnection(function (err, connection) {
     'CREATE TEMPORARY TABLE ?? (',
     '`day` varchar(24),',
     '`timezone` varchar(10),',
+    '`pre_idx` int,',
     '`dt` datetime',
     ') ENGINE=InnoDB DEFAULT CHARSET=utf8'
   ].join('\n'), [table], assert.ifError);
@@ -97,11 +98,11 @@ function testNextDate(connection) {
   }
 
   connection.config.timezone = timezone;
-  connection.query('INSERT INTO ?? SET ?', [table, {day: day, timezone: timezone, dt: dt}], assert.ifError);
+  connection.query('INSERT INTO ?? SET ?', [table, {day: day, timezone: timezone, dt: dt, pre_idx: pre_idx}], assert.ifError);
 
   var options = {
-    sql: 'SELECT * FROM ?? WHERE timezone = ? AND day = ?',
-    values: [table, timezone, day],
+    sql: 'SELECT * FROM ?? WHERE timezone = ? AND day = ? AND pre_idx = ?',
+    values: [table, timezone, day, pre_idx],
     typeCast: function (field, next) {
       if (field.type !== 'DATETIME') {
         return next();
@@ -112,9 +113,11 @@ function testNextDate(connection) {
 
   connection.query(options, function (err, rows_raw) {
     assert.ifError(err);
+    assert.equal(rows_raw.length, 1);
     delete options.typeCast;
     connection.query(options, function (err, rows) {
       assert.ifError(err);
+      assert.equal(rows.length, 1);
       if (dt.getTime() !== rows[0].dt.getTime() || expected_date_string !== rows_raw[0].dt) {
         console.log('Failure while testing date: ' + day + ', Timezone: ' + timezone);
         console.log('Pre-statement: ' + pre_statements[pre_idx]);
