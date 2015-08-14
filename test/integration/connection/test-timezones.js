@@ -1,10 +1,10 @@
-var MockDate = require('../../mock_date');
+var timezone_mock = require('timezone-mock');
 
 var assert = require('assert');
 var common = require('../../common');
 
 function registerMock() {
-  MockDate.register('US/Pacific');
+  timezone_mock.register('US/Pacific');
   assert.ok(new Date().getTimezoneOffset() === 420 || new Date().getTimezoneOffset() === 480);
 }
 
