@@ -298,8 +298,9 @@ var tzdata = {
   }
 };
 
-var date_iso_8601_regex=/^\d\d\d\d(?:-\d\d(?:-\d\d(?:T\d\d\:\d\d\:\d\d(?:\.\d\d\d)?Z?)?)?)?$/;
-var local_date_regex=/\d\d\d\d-\d\d-\d\d \d\d\:\d\d\:\d\d/;
+var date_iso_8601_regex=/^\d\d\d\d(-\d\d(-\d\d(T\d\d\:\d\d\:\d\d(\.\d\d\d)?Z?)?)?)?$/;
+var date_with_offset=/^\d\d\d\d-\d\d-\d\d \d\d\:\d\d\:\d\d(\.\d\d\d)? (Z|(\-|\+|)\d\d\:\d\d)$/;
+var local_date_regex=/^\d\d\d\d-\d\d-\d\d \d\d\:\d\d\:\d\d$/;
 
 function MockDate(param) {
   assert.ok(arguments.length <= 1);
@@ -307,7 +308,7 @@ function MockDate(param) {
     if (param instanceof MockDate) {
       this.d = new OrigDate(param.d);
     } else if (typeof param === 'string') {
-      if (param.match(date_iso_8601_regex)) {
+      if (param.match(date_iso_8601_regex) || param.match(date_with_offset)) {
         this.d = new OrigDate(param);
       } else if (param.match(local_date_regex)) {
         this.d = new OrigDate();
